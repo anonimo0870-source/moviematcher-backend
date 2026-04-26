@@ -117,6 +117,8 @@ def get_current_user(current_user):
 @api_bp.route('/discover/movies', methods=['GET'])
 def discover_movies():
     args = request.args
+    print("🔍 TODOS LOS PARÁMETROS:", dict(args))  # <-- Agrega esto
+
     tmdb_params = {'page': args.get('page', 1, type=int)}
     
     if args.get('genre'):
@@ -137,15 +139,23 @@ def discover_movies():
         tmdb_params['with_watch_providers'] = args.get('with_watch_providers')
         print(f"🔍 Proveedor filtro: {args.get('with_watch_providers')}")  # Debug
 
-    sort_map = {
-        'popular': 'popularity.desc',
-        'rating': 'vote_average.desc',
-        'date': 'primary_release_date.desc',
-        'title': 'original_title.asc'
-    }
-    sort_by = args.get('sort_by', 'popular')
-    tmdb_params['sort_by'] = sort_map.get(sort_by, 'popularity.desc')
-    
+        # Verificar si sort_by viene directamente del frontend
+    sort_by = args.get('sort_by')
+    if sort_by:
+        # Usar el valor directamente
+        tmdb_params['sort_by'] = sort_by
+        print(f"🔍 sort_by usado: {sort_by}")
+    else:
+        # Usar el mapa por defecto
+        sort_map = {
+            'popular': 'popularity.desc',
+            'rating': 'vote_average.desc',
+            'date': 'primary_release_date.desc',
+            'title': 'original_title.asc'
+        }
+        default_sort = args.get('sort_by_default', 'popular')
+        tmdb_params['sort_by'] = sort_map.get(default_sort, 'popularity.desc')
+
     mood = args.get('mood')
     if mood:
         mood_config = {
@@ -186,14 +196,21 @@ def discover_tv():
         tmdb_params['with_watch_providers'] = args.get('with_watch_providers')
         print(f"🔍 Proveedor filtro (TV): {args.get('with_watch_providers')}")
     
-    sort_map = {
-        'popular': 'popularity.desc',
-        'rating': 'vote_average.desc',
-        'date': 'first_air_date.desc',
-        'name': 'name.asc'
-    }
-    sort_by = args.get('sort_by', 'popular')
-    tmdb_params['sort_by'] = sort_map.get(sort_by, 'popularity.desc')
+     # === CÓDIGO MODIFICADO ===
+    sort_by = args.get('sort_by')
+    if sort_by:
+        tmdb_params['sort_by'] = sort_by
+        print(f"🔍 sort_by series usado: {sort_by}")
+    else:
+        sort_map = {
+            'popular': 'popularity.desc',
+            'rating': 'vote_average.desc',
+            'date': 'first_air_date.desc',
+            'name': 'name.asc'
+        }
+        default_sort = args.get('sort_by_default', 'popular')
+        tmdb_params['sort_by'] = sort_map.get(default_sort, 'popularity.desc')
+    # ===========================
     
     try:
         results = tmdb_service.discover_tv(**tmdb_params)
